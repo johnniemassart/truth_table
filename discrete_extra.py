@@ -28,29 +28,24 @@ class Eq_Truth_Table:
        
        
             
-    # TRUTH TABLE FOR PROPOSITIONAL VARIABLES
+    # # TRUTH TABLE FOR PROPOSITIONAL VARIABLES
     def truth_setup(self):
         sth = []
-        vars = self.var_count()
-        prop_vars_rows = 2**vars
-        for i in range(prop_vars_rows):
+        var_count = self.var_count()
+        var_count_rows = 2**var_count
+        for i in range(var_count_rows):
             nest_sth = []
-            for j in range(vars):
-                #
-                if j == 0 and i < prop_vars_rows/2:
+            iteration_count = 0
+            var_count_rows_copy = var_count_rows
+            half = var_count_rows/2
+            for j in range(var_count):
+                if j == iteration_count and i % var_count_rows_copy < half:
                     nest_sth.append(1)
-                elif j == 0 and i >= prop_vars_rows/2:
+                elif j == iteration_count and i % var_count_rows_copy >= half:
                     nest_sth.append(0)
-                #
-                elif (j == 1 and i % (prop_vars_rows/2) < (prop_vars_rows/2)/2):
-                    nest_sth.append(1)
-                elif (j == 1 and i % (prop_vars_rows/2) >= (prop_vars_rows/2)/2):
-                    nest_sth.append(0)
-                #
-                elif j == 2 and i % 2 == 0:
-                    nest_sth.append(1)
-                elif j == 2 and i % 2 != 0:
-                    nest_sth.append(0)
+                iteration_count += 1
+                var_count_rows_copy /= 2
+                half /= 2
             sth.append(nest_sth)
         return sth
     
@@ -94,6 +89,44 @@ class Eq_Truth_Table:
     
     
     
+    # TRUTH COLUMN FOR LEFT HAND SIDE (EQUIVALENT (==) SIGN)
+    def truth_lhs(self):
+        sth = self.truth_setup()
+        for i in range(len(sth)):
+            sum = 0
+            inner_counter = 0
+            nest_sth = []
+            for j in sth[i]:
+                sum += j
+                inner_counter += 1
+                if inner_counter == len(sth[i]):
+                    if sum == len(sth[i]) or sum == 0:
+                        sum = 1
+                        nest_sth.append(sum)
+                    else:
+                        sum = 0
+                        nest_sth.append(sum)
+            sth[i].append(nest_sth)
+        return sth   
+    
+    
+    
+    # LEFT HAND SIDE MATRIX OUTPUT
+    def lhs_output(self):
+        print(f"Truth Table - Left Hand Side")
+        header = self.prop_vars()
+        for i in range(len(header)):
+            print(f"Column {i+1}: {header[i]}")
+        eq_str = ""
+        for i in self.left_eq():
+            eq_str += i
+        print(f"Column {len(header)+1}: {eq_str}")
+        lhs = self.truth_lhs()
+        for i in lhs:
+            print(i)
+            
+            
+            
     # DETERMINE RIGHT EQUATION
     def right_eq(self):
         equation_list = self.equation_list()
@@ -107,89 +140,72 @@ class Eq_Truth_Table:
             if i > counter:
                 right_eq_list.append(equation_list[i])
         return right_eq_list
-            
     
     
-    # TRUTH COLUMN FOR LEFT HAND SIDE (EQUIVALENT (==) SIGN)
-    def truth_lhs(self):
+    
+    # TRUTH COLUMN FOR RIGHT HAND SIDE, EQUIVALENCE (==) SIGN
+    def truth_rhs_equiv(self):
         sth = self.truth_setup()
+        equiv = []
         for i in range(len(sth)):
             sum = 0
             inner_counter = 0
-            for j in sth[i]:
-                sum += j
-                inner_counter += 1
-                if inner_counter == len(sth[i]):
-                    if sum == len(sth[i]) or sum == 0:
-                        sum = 1
+            first = 0
+            second = 1
+            nest_sth = []
+            while inner_counter < len(sth[i]):
+                if inner_counter == first:
+                    sum += sth[i][inner_counter]
+                    inner_counter += 1
+                elif inner_counter == second:
+                    sum += sth[i][inner_counter]
+                    if sum != 1:
+                        nest_sth.append(1)
+                    elif sum == 1:
+                        nest_sth.append(0)
+                    first += 1
+                    second += 1
+                    sum = 0
+                    inner_counter = first
+            equiv.append(nest_sth)
+        return equiv
+        
+        
+         
+    # TRUTH COLUMN FOR RIGHT HAND SIDE, AND (^) SIGN
+    def truth_rhs_and(self):
+        sth = self.truth_rhs_equiv()
+        and_ = []
+        for i in range(len(sth)):
+            sum = 0
+            nest_sth = []
+            for j in range(len(sth[i])):
+                sum += sth[i][j]
+                if j == len(sth[i]) - 1:
+                    if sum == len(sth[i]):
+                        nest_sth.append(1)
                     else:
-                        sum = 0    
-            sth[i].append(sum)
-        return sth
+                        nest_sth.append(0)
+            and_.append(nest_sth)
+        return and_
     
     
     
-    # LEFT HAND SIDE MATRIX OUTPUT
-    def lhs_output(self):
-        print(f"TRUTH TABLE, LEFT HAND SIDE OF EQUATION")
-        header = self.prop_vars()
-        for i in range(len(header)):
-            print(f"Column {i+1}: {header[i]}")
-        eq_str = ""
-        for i in self.left_eq():
-            eq_str += i
-        print(f"Column {len(header)+1}: {eq_str}")
-        lhs = self.truth_lhs()
-        for i in lhs:
-            print(i)
-    
-    
-    
-    # TRUTH COLUMNS FOR RIGHT HAND SIDE (EQUIVALENT (==), AND (^) SIGN)
-    def right_equation(self):
-        # right_eq_list = self.right_eq()
+    # APPEND EQUIVALENCE (==), AND (^) TO RHS TRUTH TABLE
+    def rhs_appended(self):
         sth = self.truth_setup()
+        equiv = self.truth_rhs_equiv()
+        and_ = self.truth_rhs_and()
         for i in range(len(sth)):
-            pq_sum = 0
-            qr_sum = 0
-            inner_counter = 0
-            for j in sth[i]:
-                inner_counter += 1
-                if inner_counter == 1 or inner_counter == 2:
-                    pq_sum += j
-                if inner_counter == 2 or inner_counter == 3:
-                    qr_sum += j
-                if inner_counter == len(sth[i]):
-                    if pq_sum != 1:
-                        pq_sum = 1
-                    elif pq_sum == 1:
-                        pq_sum = 0
-                    if qr_sum != 1:
-                        qr_sum = 1
-                    elif qr_sum == 1:
-                        qr_sum = 0
-            sth[i].append(pq_sum)
-            sth[i].append(qr_sum)
-        for i in range(len(sth)):
-            pq_and_qr = 0
-            inner = 0
-            for j in sth[i]:
-                inner += 1
-                if inner == 4 or inner == 5:
-                    pq_and_qr += j
-                if inner == len(sth[i]):
-                    if pq_and_qr == 2:
-                        pq_and_qr = 1
-                    else:
-                        pq_and_qr = 0
-            sth[i].append(pq_and_qr)
+            sth[i].append(equiv[i])
+            sth[i].append(and_[i])
         return sth
-            
+        
         
     
     # RIGHT HAND SIDE MATRIX OUTPUT
     def rhs_output(self):
-        print(f"TRUTH TABLE, RIGHT HAND SIDE OF EQUATION")
+        print(f"Truth Table - Right Hand Side")
         header = self.prop_vars()
         for i in range(len(header)):
             print(f"Column {i+1}: {header[i]}")
@@ -203,7 +219,7 @@ class Eq_Truth_Table:
             print(f"Column {counter}: {right_eq[i]}")
             counter += 1
         print(f"Column {counter}: {right_total}")
-        content = self.right_equation()
+        content = self.rhs_appended()
         for i in content:
             print(i)
             
@@ -219,9 +235,11 @@ class Eq_Truth_Table:
 
    
 eq = "(p == q == r) === (p == q) ^ (q == r)"
+# eq = "(p == q == r == x) === (p == q) ^ (q == r) ^ (r == x)"
+# eq = "(p == q == r == x == y) === (p == q) ^ (q == r) ^ (r == x) ^ (x == y)"
 
 
 my = Eq_Truth_Table(eq)
-
+    
 
 my.complete_output()
